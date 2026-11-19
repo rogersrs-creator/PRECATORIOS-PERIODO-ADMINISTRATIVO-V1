@@ -78,7 +78,8 @@ if pagina == "Conferência dos casos certificados":
     st.dataframe(df.rename(columns={"caso": "Caso", "proposta": "Proposta", "data_base": "Data-base",
                                     "obs_juros": "OBS-JUROS aplicada", "obs_na_base": "OBS-JUROS na base",
                                     "calculado": "Calculado", "certificado": "Certificado",
-                                    "diferenca": "Diferença", "situacao": "Situação"}),
+                                    "diferenca": "Diferença", "selic_proposta": "SELIC-PROPOSTA calculada",
+                                    "selic_certificada": "SELIC-PROPOSTA certificada", "situacao": "Situação"}),
                  hide_index=True, width="stretch")
     st.stop()
 
@@ -111,16 +112,21 @@ with st.form("entrada"):
     obs = d3.selectbox("OBS-JUROS (obrigatória)", ["— escolha —"] + OBS_JUROS,
                        help="O que a sentença fixou sobre juros de mora. Em branco ou 'sem informação' não é "
                             "regra válida: escolha uma das quatro.")
-    v1, v2 = st.columns(2)
+    v1, v2, v3 = st.columns(3)
     principal = v1.number_input("Principal na data-base (R$)", min_value=0.0, step=0.01, format="%.2f")
     juros = v2.number_input("Juros na data-base (R$)", min_value=0.0, step=0.01, format="%.2f")
+    selic = v3.number_input("SELIC na data-base (R$)" + (" · obrigatório desde a proposta 2027" if ano >= 2027 else ""),
+                            min_value=0.0, step=0.01, format="%.2f",
+                            help="Parcela da SELIC já existente no cálculo homologado (data-base a partir de 12/2021). "
+                                 "Informe 0,00 se não houver.")
     enviar = st.form_submit_button("Calcular", type="primary")
 
 if enviar:
     if obs not in OBS_JUROS:
         st.error("Escolha a OBS-JUROS: 1% ao mês, 0,5% ao mês, Poupança ou Não incidem.")
         st.stop()
-    entrada = Entrada(esfera, natureza, int(ano), (int(ano_db), int(mes_db)), principal, juros, obs)
+    entrada = Entrada(esfera, natureza, int(ano), (int(ano_db), int(mes_db)), principal, juros, obs,
+                      selic)
     try:
         st.session_state["resultado"] = calcular(entrada, bases, df_graca)
     except (ValueError, NotImplementedError) as e:
@@ -136,6 +142,11 @@ if res:
     m2.metric("Juros", brl(res.juros))
     m3.metric("SELIC", brl(res.selic))
     m4.metric("Total", brl(res.total))
+    st.subheader(f"Posição na proposta {res.entrada.ano_proposta}")
+    st.caption("Como os valores entram na base de propostas. Desde a proposta 2027 o campo SELIC é obrigatório e "
+               "fica separado; até a 2026 a SELIC vem somada aos juros.")
+    st.dataframe(pd.DataFrame([{k: brl(v) for k, v in res.posicao_proposta().items()}]), hide_index=True,
+                 width="stretch")
     st.subheader("Trechos")
     st.dataframe(pd.DataFrame(res.trechos).rename(columns={"trecho": "Trecho", "de": "De", "ate": "Até",
                                                            "descricao": "Resumo"}),

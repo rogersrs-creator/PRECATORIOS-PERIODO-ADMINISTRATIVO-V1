@@ -69,12 +69,15 @@ class UniaoNaoTributario(Regra):
             raise ValueError(f"A data-base ({rotulo(db)}) precisa ser anterior à data final da proposta "
                              f"{e.ano_proposta} ({rotulo(fim)}).")
 
-        P0, J0 = float(e.principal), float(e.juros)
+        P0, J0, S0 = float(e.principal), float(e.juros), float(e.selic or 0)
+        if S0 and db < INICIO_SELIC:
+            raise ValueError("SELIC na data-base só existe para data-base a partir de 12/2021 (EC 113/2021). "
+                             "Para data-base anterior, deixe o campo SELIC em zero.")
         tem_principal = P0 > 0
         f, js = 1.0, 0.0
         linhas = res.linhas
         linhas.append(Linha(rotulo(db) + " (data-base)", "Data-base", "Valores da data-base",
-                            None, None, None, 1.0, 0.0, 0.0, P0, J0, 0.0))
+                            None, None, None, 1.0, 0.0, 0.0, P0, J0, S0))
 
         def taxa_juros(k: Mes) -> float:
             if not tem_principal or e.obs_juros == "Não incidem":
@@ -143,7 +146,7 @@ class UniaoNaoTributario(Regra):
                                 P0 * f, J0 * f + P0 * f * js / 100, 0.0))
         P = P0 * f
         J = J0 * f + P * js / 100
-        S = 0.0
+        S = S0
         if ini1 < fim1:
             res.trechos.append(dict(trecho="1 · IPCA-E + juros do título", de=rotulo(ini1),
                                     ate=rotulo(anterior(fim1)),
@@ -161,13 +164,14 @@ class UniaoNaoTributario(Regra):
                     parou = True
                     break
                 s += b.selic[k]
-                S = base * s / 100
+                S = S0 + base * s / 100
                 linhas.append(Linha(rotulo(k), "2 · SELIC (EC 113)",
                                     "SELIC simples sobre principal + juros consolidados (EC 113/2021, art. 3º)",
                                     None, None, b.selic[k], f, js, s, P, J, S))
             res.trechos.append(dict(trecho="2 · SELIC simples (EC 113)", de=rotulo(ini2),
                                     ate=rotulo(anterior(fim2)),
-                                    descricao=f"SELIC somada {s:.4f}% sobre {base:,.2f}"))
+                                    descricao=f"SELIC somada {s:.4f}% sobre {base:,.2f}"
+                                    + (f" (mais a SELIC da data-base, {S0:,.2f}, que não recebe SELIC)" if S0 else "")))
             if parou:
                 return self._fechar(res, P, J, S)
 

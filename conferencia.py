@@ -27,13 +27,17 @@ def ler_casos() -> list[dict]:
 def conferir(caso: dict, bases, df_graca) -> dict:
     m, a = caso["DATA_BASE"].split("/")
     e = Entrada("Nacional", "Não Tributário", int(caso["PROPOSTA"]), (int(a), int(m)),
-                para_numero(caso["PRINCIPAL"]), para_numero(caso["JUROS"]), caso["OBS_JUROS"])
+                para_numero(caso["PRINCIPAL"]), para_numero(caso["JUROS"]), caso["OBS_JUROS"],
+                para_numero(caso.get("SELIC") or 0))
     r = calcular(e, bases, df_graca)
     cert = sum(para_numero(caso[c]) for c in ("CERT_PRINCIPAL", "CERT_JUROS", "CERT_SELIC"))
     dif = round(r.total, 2) - round(cert, 2)
+    pos = r.posicao_proposta()
+    selic_cert = para_numero(caso["CERT_SELIC"])
     return dict(caso=caso["CASO"], proposta=e.ano_proposta, data_base=caso["DATA_BASE"],
                 obs_juros=caso["OBS_JUROS"], obs_na_base=caso["OBS_JUROS_NA_BASE"],
                 calculado=round(r.total, 2), certificado=round(cert, 2), diferenca=round(dif, 2),
+                selic_proposta=round(pos["SELIC-PROPOSTA"], 2), selic_certificada=round(selic_cert, 2),
                 situacao="Fecha" if abs(dif) <= TOLERANCIA else "NÃO FECHA", resultado=r)
 
 

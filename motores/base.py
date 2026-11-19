@@ -87,6 +87,7 @@ class Entrada:
     principal: float
     juros: float
     obs_juros: str
+    selic: float = 0.0   # SELIC já existente na data-base (só para data-base desde 12/2021)
 
 
 @dataclass
@@ -125,6 +126,17 @@ class Resultado:
     @property
     def total(self) -> float:
         return self.principal + self.juros + self.selic
+
+    def posicao_proposta(self) -> dict:
+        """Valores como entram na base de propostas (colunas ...-PROPOSTA).
+
+        Desde a proposta 2027 o campo SELIC é obrigatório e fica separado; até a 2026 a SELIC
+        vem somada aos juros (como nos casos certificados)."""
+        if self.entrada.ano_proposta >= 2027:
+            return {"VALOR-PRINCIPAL-PROPOSTA": self.principal, "VALOR-JUROS-PROPOSTA": self.juros,
+                    "SELIC-PROPOSTA": self.selic, "TOTAL-PROPOSTA": self.total}
+        return {"VALOR-PRINCIPAL-PROPOSTA": self.principal, "VALOR-JUROS-PROPOSTA": self.juros + self.selic,
+                "SELIC-PROPOSTA": 0.0, "TOTAL-PROPOSTA": self.total}
 
 
 class Regra:

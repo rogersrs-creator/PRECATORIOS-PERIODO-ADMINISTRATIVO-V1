@@ -42,9 +42,14 @@ def gerar_excel(res: Resultado) -> bytes:
         ("Data final (data-base da proposta)", f"{rotulo(res.data_final)} · {res.origem_data_final}"),
         ("OBS-JUROS", e.obs_juros),
         ("Principal na data-base", e.principal), ("Juros na data-base", e.juros),
+        ("SELIC na data-base", float(e.selic or 0)),
         (None, None),
         ("Principal atualizado", res.principal), ("Juros atualizados", res.juros),
         ("SELIC", res.selic), ("Total", res.total),
+        (None, None),
+        (f"Posição na proposta {e.ano_proposta}", "(como entra na base; até 2026 a SELIC vai somada aos juros)"),
+        *[(k, float(v)) for k, v in res.posicao_proposta().items()],
+        (None, None),
         ("Situação", "PARCIAL: faltam índices" if res.parcial else "Completo"),
     ]
     r = 3

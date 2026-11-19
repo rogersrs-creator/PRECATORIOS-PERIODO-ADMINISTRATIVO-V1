@@ -1,4 +1,4 @@
-# Período administrativo dos precatórios · App Streamlit (versão local 1)
+# Período administrativo dos precatórios · App Streamlit (versão local 2)
 
 Calcula a atualização do valor **da data-base do cálculo homologado até a data-base dos cálculos da
 proposta orçamentária** indicada, com as regras do deck v9 (Período administrativo). Mesma base de código e
@@ -27,8 +27,17 @@ Conferência pela linha de comando (sem abrir o app): `python conferencia.py` (G
 | Nacional | Tributário | aguardando a regra |
 | Subnacional | Não tributário / Tributário | aguardando as regras |
 
-Entradas: ano da proposta, data-base do processo (mês/ano), principal, juros e **OBS-JUROS (obrigatória)**:
-1% ao mês, 0,5% ao mês, Poupança ou Não incidem.
+Entradas: ano da proposta, data-base do processo (mês/ano), principal, juros, **SELIC na data-base**
+(obrigatória desde a proposta 2027; 0,00 se não houver) e **OBS-JUROS (obrigatória)**: 1% ao mês,
+0,5% ao mês, Poupança ou Não incidem.
+
+**SELIC na data-base (v2):** parcela da SELIC já existente no cálculo homologado; só é aceita para data-base a
+partir de 12/2021. No trecho 2 ela é somada à SELIC nova, sem receber SELIC (sem capitalização, Res. CJF
+983/2026, art. 7º, § 4º); no trecho 3 é corrigida pelo IPCA.
+
+**Posição na proposta (v2):** a tela e o Excel trazem os valores como entram na base de propostas
+(VALOR-PRINCIPAL-PROPOSTA, VALOR-JUROS-PROPOSTA, SELIC-PROPOSTA, TOTAL-PROPOSTA). Desde a proposta 2027 a SELIC
+fica separada; até a 2026 vai somada aos juros, como nos casos certificados.
 
 Trechos (cada um só entra se estiver entre a data-base e a data final):
 
