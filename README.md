@@ -1,4 +1,4 @@
-# Período administrativo dos precatórios · App Streamlit (versão local 10)
+# Período administrativo dos precatórios · App Streamlit (versão 11)
 
 Calcula a atualização do valor **da data-base do cálculo homologado até a data-base dos cálculos da
 proposta orçamentária** indicada, com as regras do deck v9 (Período administrativo). Mesma base de código e
@@ -148,3 +148,8 @@ Até a proposta 2026 não existe campo Selic: a SELIC já existente no cálculo 
 regras daquele período (a SELIC da EC 113 incide sobre principal + juros consolidados). O campo Selic só aparece desde a
 proposta 2027 (obrigatório), como no caso X18. Na importação do texto colado, um "Valor Selic" de proposta até 2026 é
 somado aos juros, com aviso.
+
+## v11 – Reserva automática quando o Google Sheets falha
+
+Se uma planilha do Drive não carregar (erro HTTP, sem compartilhamento, sem internet), o app usa o CSV de reserva da
+pasta `dados/` e mostra um aviso na barra lateral, em vez de parar. Link sem `gid` exporta a primeira aba.

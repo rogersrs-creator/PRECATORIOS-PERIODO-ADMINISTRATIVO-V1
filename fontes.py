@@ -37,8 +37,9 @@ def url_exportacao_csv(url_planilha: str) -> str:
     if not m_id:
         raise ValueError(f"Link de planilha inválido: {url_planilha}")
     m_gid = re.search(r"[#&?]gid=(\d+)", url_planilha)
-    gid = m_gid.group(1) if m_gid else "0"
-    return f"https://docs.google.com/spreadsheets/d/{m_id.group(1)}/export?format=csv&gid={gid}"
+    base = f"https://docs.google.com/spreadsheets/d/{m_id.group(1)}/export?format=csv"
+    # Sem gid no link: exporta a primeira aba (não supor gid=0, que nem sempre existe).
+    return f"{base}&gid={m_gid.group(1)}" if m_gid else base
 
 
 def _baixar_texto(url: str) -> str:
@@ -157,16 +158,27 @@ def carregar_todas(urls: dict) -> tuple[dict, pd.DataFrame, dict]:
     """
     dfs, origens, erros = {}, {}, []
     for nome in ARQUIVOS_LOCAIS:
+        url = urls.get(nome, "")
         try:
-            dfs[nome], origens[nome] = carregar_base(nome, urls.get(nome, ""))
+            dfs[nome], origens[nome] = carregar_base(nome, url)
+            continue
         except urllib.error.HTTPError as e:
             if e.code in (401, 403):
-                erros.append(f"{nome}: planilha não está pública (erro {e.code}). Compartilhe como "
-                             f"'Qualquer pessoa com o link – Leitor'.")
+                motivo = (f"planilha não está pública (erro {e.code}). Compartilhe como "
+                          f"'Qualquer pessoa com o link – Leitor'")
             else:
-                erros.append(f"{nome}: erro HTTP {e.code} ao baixar a planilha.")
+                motivo = f"erro HTTP {e.code} ao baixar a planilha"
         except Exception as e:
-            erros.append(f"{nome}: {e}")
+            motivo = str(e)
+        if not url:
+            erros.append(f"{nome}: {motivo}")
+            continue
+        # Falhou o Google Sheets: usa o CSV de reserva da pasta dados/ e avisa.
+        try:
+            dfs[nome], origem_local = carregar_base(nome, "")
+            origens[nome] = f"⚠️ {origem_local} · Google Sheets falhou: {motivo}"
+        except Exception as e2:
+            erros.append(f"{nome}: {motivo}; CSV de reserva também falhou: {e2}")
     if erros:
         raise RuntimeError("\n\n".join(erros))
     graca = dfs.pop("GRACA")

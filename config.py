@@ -11,7 +11,7 @@ import sys
 
 PLANILHAS = {
     # IPCA-E sem TR (07/2000 = 1). colunas: data;variacao-mes;n_indice
-    "IPCAE_SEM_TR": "https://docs.google.com/spreadsheets/d/1YirgR_GKC8Oc7JN7uOHJyAsmCLX4slkxaBY0IwhXGn4/edit?gid=0#gid=0",
+    "IPCAE_SEM_TR": "https://docs.google.com/spreadsheets/d/1YirgR_GKC8Oc7JN7uOHJyAsmCLX4slkxaBY0IwhXGn4/edit?usp=sharing",
     # colunas: data;variacao-mes;n_indice  (mesma planilha do V6)
     "POUPANCA": "https://docs.google.com/spreadsheets/d/15p8EWBw9N19uyQzsxgip42OuOPQIyAnV-zwAk7PPOKE/edit?gid=1434923967#gid=1434923967",
     # colunas: data;variacao-mes;n_indice  (mesma planilha do V6)

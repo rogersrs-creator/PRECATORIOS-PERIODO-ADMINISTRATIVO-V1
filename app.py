@@ -59,6 +59,10 @@ bases = Bases.de_dataframes(dfs)
 with st.sidebar:
     for s in (bases.ipcae, bases.poupanca, bases.selic, bases.ipca):
         st.caption(f"**{s.nome}**: variações até {rotulo(s.ultimo) if s.ultimo else '—'}")
+    _falhas = [f"{k}: {v}" for k, v in origens.items() if str(v).startswith("⚠️")]
+    if _falhas:
+        st.warning("Planilha(s) do Google Sheets não carregaram; o app usou o CSV de reserva:\n\n" +
+                   "\n\n".join(_falhas))
     with st.expander("Origem dos dados"):
         for k, v in origens.items():
             st.write(f"{k}: {v}")
