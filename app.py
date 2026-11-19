@@ -95,7 +95,7 @@ if pagina == "Conferência dos casos certificados":
 # ------------------------------------------------------------------------------
 st.title("📅 Período administrativo")
 st.caption("Atualização do valor da data-base do cálculo homologado até a data-base dos cálculos da proposta "
-           "orçamentária, conforme as regras do deck v9.")
+           "orçamentária, conforme as regras do deck v12.")
 
 c_esf, c_nat, c_ano, c_reg = st.columns([1.2, 1.1, 1, 3])
 esfera = c_esf.radio("Esfera", list(ESFERAS), horizontal=True)

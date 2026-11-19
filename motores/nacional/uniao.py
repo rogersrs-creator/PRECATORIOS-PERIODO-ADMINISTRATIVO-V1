@@ -1,7 +1,7 @@
 """
 União, não tributário: da data-base do processo à data-base da proposta.
 
-Regras do deck v9 (Período administrativo), conferidas nos casos certificados:
+Regras do deck v12 (Período administrativo), conferidas nos casos certificados:
 
 Trecho 0 · data-base em 2000: UFIR fixa até 12/2000 e, em 01/2001, o IPCA-E acumulado de
            jan a dez/2000 (fator 1,060356), qualquer que seja o mês da data-base
