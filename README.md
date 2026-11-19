@@ -1,4 +1,4 @@
-# Período administrativo dos precatórios · App Streamlit (versão local 2)
+# Período administrativo dos precatórios · App Streamlit (versão local 3)
 
 Calcula a atualização do valor **da data-base do cálculo homologado até a data-base dos cálculos da
 proposta orçamentária** indicada, com as regras do deck v9 (Período administrativo). Mesma base de código e
@@ -89,3 +89,9 @@ dados/              CSV de reserva + CASOS-CERTIFICADOS.csv (15 casos, sem núme
 
 Os 15 casos certificados da União (não tributários, propostas 2015–2027) fecham com diferença de no máximo
 R$ 0,67, só de arredondamento. A regra de arredondamento ainda será definida.
+
+## v3 – Entrada no formato do app V6
+
+Esfera e natureza em botões, ano da proposta em lista ("Selecione o ano..."), data-base em calendário
+DD/MM/AAAA (só mês/ano contam; o dia vira 1º) e valores digitados no formato brasileiro (ex.: 1.234,56),
+como no V6. O campo Selic aparece com * e é obrigatório desde a proposta 2027.

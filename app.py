@@ -6,11 +6,13 @@ Executar localmente:  streamlit run app.py
 """
 from __future__ import annotations
 
+from datetime import date
+
 import pandas as pd
 import streamlit as st
 
 import config
-from fontes import carregar_todas
+from fontes import carregar_todas, para_numero
 from motores import ESFERAS, NATUREZAS, Bases, Entrada, calcular, data_final, regra_para
 from motores.base import rotulo
 from motores.nacional.uniao import OBS_JUROS
@@ -90,48 +92,83 @@ st.title("📅 Período administrativo")
 st.caption("Atualização do valor da data-base do cálculo homologado até a data-base dos cálculos da proposta "
            "orçamentária, conforme as regras do deck v9.")
 
-c1, c2, c3 = st.columns(3)
-esfera = c1.selectbox("Esfera", list(ESFERAS))
-natureza = c2.selectbox("Natureza", NATUREZAS)
-ano = c3.number_input("Ano da proposta", min_value=2001, max_value=2100, value=2028, step=1)
+c_esf, c_nat, c_ano, c_reg = st.columns([1.2, 1.1, 1, 3])
+esfera = c_esf.radio("Esfera", list(ESFERAS), horizontal=True)
+natureza = c_nat.radio("Natureza", NATUREZAS, horizontal=True,
+                       help="Tributário: regra a ser informada.")
+anos_graca = sorted(df_graca["ANO_PROPOSTA"].unique().tolist())
+anos_disponiveis = list(range(max(anos_graca[-1] if anos_graca else 2027, date.today().year) + 3, 2000, -1))
+ano = c_ano.selectbox("Ano da proposta", anos_disponiveis, index=None, placeholder="Selecione o ano...",
+                      help="Propostas de 2001 em diante. Fora da planilha GRACA, a data final segue a CF, art. 100, § 5º.")
 
-regra = regra_para(esfera, int(ano), natureza)
-fim, origem_fim = data_final(int(ano), df_graca)
+regra = regra_para(esfera, ano or 2028, natureza)
 if regra is None or not regra.disponivel:
-    st.warning(f"**{esfera} · {natureza}**: {regra.descricao if regra else 'sem regime'} "
-               "Por enquanto o app calcula só **Nacional · Não Tributário** (União).")
+    st.info(f"O modelo de cálculo para **{esfera} · {natureza}** ainda está em desenvolvimento "
+            f"({regra.descricao if regra else 'sem regime'}). Selecione **Nacional · Não Tributário** para calcular.")
     st.stop()
-st.info(f"**Regime:** {regra.nome}. {regra.descricao}\n\n"
-        f"**Data final (data-base da proposta {int(ano)}):** {rotulo(fim)} ({origem_fim}). "
-        f"As variações entram até {rotulo((fim[0] - (fim[1] == 1), 12 if fim[1] == 1 else fim[1] - 1))}.")
+if ano is None:
+    st.stop()
+ano = int(ano)
+fim, origem_fim = data_final(ano, df_graca)
+fim_ts = date(fim[0], fim[1], 1)
+c_reg.info(f"**Regime:** {regra.nome}. {regra.descricao}\n\n"
+           f"**Data-base da proposta {ano}:** {fim_ts:%d/%m/%Y} ({origem_fim}). "
+           f"As variações entram até o mês anterior.")
 
-with st.form("entrada"):
-    d1, d2, d3 = st.columns(3)
-    mes_db = d1.number_input("Data-base do processo: mês", 1, 12, 1)
-    ano_db = d2.number_input("Data-base do processo: ano", 2000, 2100, 2020)
-    obs = d3.selectbox("OBS-JUROS (obrigatória)", ["— escolha —"] + OBS_JUROS,
-                       help="O que a sentença fixou sobre juros de mora. Em branco ou 'sem informação' não é "
-                            "regra válida: escolha uma das quatro.")
-    v1, v2, v3 = st.columns(3)
-    principal = v1.number_input("Principal na data-base (R$)", min_value=0.0, step=0.01, format="%.2f")
-    juros = v2.number_input("Juros na data-base (R$)", min_value=0.0, step=0.01, format="%.2f")
-    selic = v3.number_input("SELIC na data-base (R$)" + (" · obrigatório desde a proposta 2027" if ano >= 2027 else ""),
-                            min_value=0.0, step=0.01, format="%.2f",
-                            help="Parcela da SELIC já existente no cálculo homologado (data-base a partir de 12/2021). "
-                                 "Informe 0,00 se não houver.")
-    enviar = st.form_submit_button("Calcular", type="primary")
+selic_obrigatorio = ano >= 2027
+with st.form("form_calculo"):
+    st.subheader("Dados do processo")
+    c1, c2, c3, c4 = st.columns(4)
+    data_base = c1.date_input("Data-base do cálculo", value=None, min_value=date(2000, 1, 1),
+                              max_value=fim_ts, format="DD/MM/YYYY",
+                              help="Data-base do cálculo homologado. Só o mês/ano é considerado (o dia é ajustado "
+                                   "para 1º).")
+    principal_txt = c2.text_input("Valor principal (R$)", placeholder="Ex.: 871,04")
+    juros_txt = c3.text_input("Juros (R$)", value="0,00")
+    if selic_obrigatorio:
+        selic_txt = c4.text_input("Selic (R$) *", placeholder="Obrigatório (ex.: 0,00)",
+                                  help="Campo obrigatório desde a proposta 2027. Parcela da SELIC já existente no "
+                                       "cálculo homologado (data-base a partir de 12/2021). Informe 0,00 se não houver.")
+    else:
+        selic_txt = c4.text_input("Selic (R$)", value="0,00",
+                                  help="Parcela da SELIC já existente no cálculo homologado, se houver "
+                                       "(data-base a partir de 12/2021).")
+    obs = st.radio("OBS-JUROS (obrigatória)", OBS_JUROS, index=None, horizontal=True,
+                   help="O que a sentença fixou sobre juros de mora. Em branco ou 'sem informação' não é regra "
+                        "válida: escolha uma das quatro.")
+    enviar = st.form_submit_button("Calcular", type="primary", width="stretch")
 
 if enviar:
+    erros = []
+    principal = para_numero(principal_txt)
+    juros = para_numero(juros_txt) if juros_txt.strip() else 0.0
+    if not principal_txt.strip() or pd.isna(principal) or principal < 0:
+        erros.append("Informe um **valor principal** válido (ex.: 871,04; use 0,00 se não houver).")
+    if pd.isna(juros) or juros < 0:
+        erros.append("Informe um valor de **juros** válido (use 0,00 se não houver).")
+    if not selic_txt.strip():
+        if selic_obrigatorio:
+            erros.append("O campo **Selic** é obrigatório nesta proposta (informe 0,00 se não houver).")
+        selic = 0.0
+    else:
+        selic = para_numero(selic_txt)
+        if pd.isna(selic) or selic < 0:
+            erros.append("Informe um valor de **Selic** válido (ex.: 1.234,56).")
+    if data_base is None:
+        erros.append("Informe a **data-base do cálculo**.")
     if obs not in OBS_JUROS:
-        st.error("Escolha a OBS-JUROS: 1% ao mês, 0,5% ao mês, Poupança ou Não incidem.")
-        st.stop()
-    entrada = Entrada(esfera, natureza, int(ano), (int(ano_db), int(mes_db)), principal, juros, obs,
-                      selic)
-    try:
-        st.session_state["resultado"] = calcular(entrada, bases, df_graca)
-    except (ValueError, NotImplementedError) as e:
+        erros.append("Escolha a **OBS-JUROS**: 1% ao mês, 0,5% ao mês, Poupança ou Não incidem.")
+    if erros:
+        for e in erros:
+            st.error(e)
         st.session_state.pop("resultado", None)
-        st.error(str(e))
+    else:
+        entrada = Entrada(esfera, natureza, ano, (data_base.year, data_base.month), principal, juros, obs, selic)
+        try:
+            st.session_state["resultado"] = calcular(entrada, bases, df_graca)
+        except (ValueError, NotImplementedError) as e:
+            st.session_state.pop("resultado", None)
+            st.error(str(e))
 
 res = st.session_state.get("resultado")
 if res:
