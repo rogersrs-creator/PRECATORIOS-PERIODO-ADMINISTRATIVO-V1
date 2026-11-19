@@ -1,4 +1,4 @@
-# Período administrativo dos precatórios · App Streamlit (versão local 9)
+# Período administrativo dos precatórios · App Streamlit (versão local 10)
 
 Calcula a atualização do valor **da data-base do cálculo homologado até a data-base dos cálculos da
 proposta orçamentária** indicada, com as regras do deck v9 (Período administrativo). Mesma base de código e
@@ -141,3 +141,10 @@ fora das quatro regras deixa a OBS-JUROS em branco e avisa. Código em `importac
 - Data-base em 2000 com juros do título: os juros contam desde a data-base, inclusive os meses de 2000 (sem aviso).
 - Teto da SELIC desde 09/2025: no mês em que a SELIC é menor que IPCA + 2% a.a., a SELIC incide só sobre o
   principal e vai para o campo Selic; nesse mês não há IPCA. Até 08/2026 isso não aconteceu em nenhum mês.
+
+## v10 – Selic só desde a proposta 2027
+
+Até a proposta 2026 não existe campo Selic: a SELIC já existente no cálculo homologado entra nos **juros** e segue as
+regras daquele período (a SELIC da EC 113 incide sobre principal + juros consolidados). O campo Selic só aparece desde a
+proposta 2027 (obrigatório), como no caso X18. Na importação do texto colado, um "Valor Selic" de proposta até 2026 é
+somado aos juros, com aviso.

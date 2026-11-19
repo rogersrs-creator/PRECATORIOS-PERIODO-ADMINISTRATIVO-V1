@@ -83,6 +83,8 @@ class UniaoNaoTributario(Regra):
                              f"{e.ano_proposta} ({rotulo(fim)}).")
 
         P0, J0, S0 = float(e.principal), float(e.juros), float(e.selic or 0)
+        if S0 and e.ano_proposta < 2027:
+            raise ValueError("Até a proposta 2026 não há campo Selic: a SELIC já existente entra nos juros.")
         if S0 and db < INICIO_SELIC:
             raise ValueError("SELIC na data-base só existe para data-base a partir de 12/2021 (EC 113/2021). "
                              "Para data-base anterior, deixe o campo SELIC em zero.")

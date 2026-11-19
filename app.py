@@ -135,8 +135,16 @@ with st.expander("📋 Colar os dados da tela do sistema", expanded=False):
                 st.error(_e)
         else:
             st.session_state["principal_txt"] = fmt_imp(imp["principal"])
-            st.session_state["juros_txt"] = fmt_imp(imp["juros"])
-            st.session_state["selic_txt"] = fmt_imp(imp["selic"])
+            if selic_obrigatorio:
+                st.session_state["juros_txt"] = fmt_imp(imp["juros"])
+                st.session_state["selic_txt"] = fmt_imp(imp["selic"])
+            else:
+                # Até a proposta 2026 não há campo Selic: a SELIC faz parte dos juros.
+                st.session_state["juros_txt"] = fmt_imp((imp["juros"] or 0.0) + (imp["selic"] or 0.0))
+                st.session_state["selic_txt"] = ""
+                if imp["selic"]:
+                    imp["avisos"].append(f"Proposta {ano}: até 2026 não há campo Selic. O Valor Selic "
+                                         f"({fmt_imp(imp['selic'])}) foi somado aos juros.")
             st.session_state["data_base"] = imp["data_base"]
             st.session_state["obs"] = imp["obs_juros"]
             st.session_state.pop("resultado", None)
@@ -153,21 +161,22 @@ with st.expander("📋 Colar os dados da tela do sistema", expanded=False):
 
 with st.form("form_calculo"):
     st.subheader("Dados do processo")
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3, *c4 = st.columns(4 if selic_obrigatorio else 3)
     data_base = c1.date_input("Data-base do cálculo", key="data_base", min_value=date(2000, 1, 1),
                               max_value=fim_ts, format="DD/MM/YYYY",
                               help="Data-base do cálculo homologado. Só o mês/ano é considerado (o dia é ajustado "
                                    "para 1º).")
     principal_txt = c2.text_input("Valor principal (R$)", placeholder="Ex.: 871,04", key="principal_txt")
-    juros_txt = c3.text_input("Juros (R$)", key="juros_txt")
+    juros_txt = c3.text_input("Juros (R$)", key="juros_txt",
+                              help=None if selic_obrigatorio else "Até a proposta 2026 a SELIC já existente no cálculo "
+                                                                  "homologado entra aqui, somada aos juros.")
     if selic_obrigatorio:
-        selic_txt = c4.text_input("Selic (R$) *", placeholder="Obrigatório (ex.: 0,00)", key="selic_txt",
-                                  help="Campo obrigatório desde a proposta 2027. Parcela da SELIC já existente no "
-                                       "cálculo homologado (data-base a partir de 12/2021). Informe 0,00 se não houver.")
+        selic_txt = c4[0].text_input("Selic (R$) *", placeholder="Obrigatório (ex.: 0,00)", key="selic_txt",
+                                     help="Campo obrigatório desde a proposta 2027. Parcela da SELIC já existente no "
+                                          "cálculo homologado (data-base a partir de 12/2021). Informe 0,00 se não "
+                                          "houver.")
     else:
-        selic_txt = c4.text_input("Selic (R$)", placeholder="0,00", key="selic_txt",
-                                  help="Parcela da SELIC já existente no cálculo homologado, se houver "
-                                       "(data-base a partir de 12/2021).")
+        selic_txt = ""   # até a proposta 2026 a SELIC já existente faz parte dos juros
     obs = st.radio("OBS-JUROS (obrigatória)", OBS_JUROS, horizontal=True, key="obs",
                    help="O que a sentença fixou sobre juros de mora. Em branco ou 'sem informação' não é regra "
                         "válida: escolha uma das quatro.")
@@ -199,7 +208,7 @@ if enviar:
         st.session_state.pop("resultado", None)
     else:
         entrada = Entrada(esfera, natureza, ano, (data_base.year, data_base.month), principal, juros, obs, selic)
-        if juros > 0 and selic == 0 and (data_base.year, data_base.month) >= (2021, 12):
+        if selic_obrigatorio and juros > 0 and selic == 0 and (data_base.year, data_base.month) >= (2021, 12):
             st.warning("Data-base a partir de 12/2021 com **Juros** preenchidos e **Selic** zerada. Se o valor "
                        "informado em Juros for a SELIC do cálculo homologado, mova-o para o campo **Selic**: a SELIC "
                        "fica no próprio campo e não recebe SELIC de novo.")
