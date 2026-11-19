@@ -97,7 +97,7 @@ reserva da pasta `dados/` e mostra um aviso na barra lateral. "Usar só os arqui
 
 16 casos certificados da União, não tributários, propostas 2015–2027 (`dados/CASOS-CERTIFICADOS.csv`, sem número de
 processo nem nome de parte), incluindo o X18 (proposta 2027 com Selic na data-base). Todos fecham dentro de R$ 1,00:
-9 em 0,00, 4 entre 0,01 e 0,05, e X01 (+0,66), X02 (+0,42), X04 (+0,16) e X05 (−0,27), de período longo de IPCA-E,
+8 em 0,00, 4 entre 0,01 e 0,05, e X01 (+0,66), X02 (+0,42), X04 (+0,16) e X05 (−0,27), de período longo de IPCA-E,
 cuja origem não foi identificada (a razão entre números-índice do IBGE foi testada e piora os resultados).
 
 ## Estrutura
