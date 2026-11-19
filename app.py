@@ -174,16 +174,22 @@ res = st.session_state.get("resultado")
 if res:
     for a in res.avisos:
         st.warning(a)
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Principal", brl(res.principal))
-    m2.metric("Juros", brl(res.juros))
-    m3.metric("SELIC", brl(res.selic))
-    m4.metric("Total", brl(res.total))
-    st.subheader(f"Posição na proposta {res.entrada.ano_proposta}")
-    st.caption("Como os valores entram na base de propostas. Desde a proposta 2027 o campo SELIC é obrigatório e "
-               "fica separado; até a 2026 a SELIC vem somada aos juros.")
-    st.dataframe(pd.DataFrame([{k: brl(v) for k, v in res.posicao_proposta().items()}]), hide_index=True,
-                 width="stretch")
+    pos = res.posicao_proposta()
+    st.subheader(f"Valores na proposta {res.entrada.ano_proposta}")
+    if res.entrada.ano_proposta >= 2027:
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Principal", brl(pos["VALOR-PRINCIPAL-PROPOSTA"]))
+        m2.metric("Juros", brl(pos["VALOR-JUROS-PROPOSTA"]))
+        m3.metric("Selic", brl(pos["SELIC-PROPOSTA"]))
+        m4.metric("Total", brl(pos["TOTAL-PROPOSTA"]))
+    else:
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Principal", brl(pos["VALOR-PRINCIPAL-PROPOSTA"]))
+        m2.metric("Juros", brl(pos["VALOR-JUROS-PROPOSTA"]))
+        m3.metric("Total", brl(pos["TOTAL-PROPOSTA"]))
+        if res.selic:
+            st.caption(f"Até a proposta 2026 não há campo Selic: a SELIC de 12/2021 em diante "
+                       f"({brl(res.selic)}) está somada aos juros ({brl(res.juros)} + {brl(res.selic)}).")
     st.subheader("Trechos")
     st.dataframe(pd.DataFrame(res.trechos).rename(columns={"trecho": "Trecho", "de": "De", "ate": "Até",
                                                            "descricao": "Resumo"}),

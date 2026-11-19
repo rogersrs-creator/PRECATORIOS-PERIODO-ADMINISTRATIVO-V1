@@ -1,4 +1,4 @@
-# Período administrativo dos precatórios · App Streamlit (versão local 3)
+# Período administrativo dos precatórios · App Streamlit (versão local 4)
 
 Calcula a atualização do valor **da data-base do cálculo homologado até a data-base dos cálculos da
 proposta orçamentária** indicada, com as regras do deck v9 (Período administrativo). Mesma base de código e
@@ -95,3 +95,9 @@ R$ 0,67, só de arredondamento. A regra de arredondamento ainda será definida.
 Esfera e natureza em botões, ano da proposta em lista ("Selecione o ano..."), data-base em calendário
 DD/MM/AAAA (só mês/ano contam; o dia vira 1º) e valores digitados no formato brasileiro (ex.: 1.234,56),
 como no V6. O campo Selic aparece com * e é obrigatório desde a proposta 2027.
+
+## v4 – Selic somada aos juros até a proposta 2026
+
+Até a proposta 2026 não existe campo Selic: a tela e o Excel mostram Principal, Juros (com a SELIC de 12/2021 em
+diante somada) e Total, como na base de propostas. Desde a 2027, Selic em campo próprio. A memória mês a mês
+continua mostrando a SELIC numa coluna à parte, para conferência.

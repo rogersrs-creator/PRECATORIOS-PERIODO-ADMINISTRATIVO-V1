@@ -44,11 +44,11 @@ def gerar_excel(res: Resultado) -> bytes:
         ("Principal na data-base", e.principal), ("Juros na data-base", e.juros),
         ("SELIC na data-base", float(e.selic or 0)),
         (None, None),
-        ("Principal atualizado", res.principal), ("Juros atualizados", res.juros),
-        ("SELIC", res.selic), ("Total", res.total),
-        (None, None),
-        (f"Posição na proposta {e.ano_proposta}", "(como entra na base; até 2026 a SELIC vai somada aos juros)"),
-        *[(k, float(v)) for k, v in res.posicao_proposta().items()],
+        (f"Valores na proposta {e.ano_proposta}",
+         "SELIC em campo próprio" if e.ano_proposta >= 2027 else "até 2026 não há campo Selic: SELIC somada aos juros"),
+        *[(k, float(v)) for k, v in res.posicao_proposta().items()
+          if e.ano_proposta >= 2027 or k != "SELIC-PROPOSTA"],
+        *([("   dos quais SELIC (12/2021 em diante)", res.selic)] if e.ano_proposta < 2027 and res.selic else []),
         (None, None),
         ("Situação", "PARCIAL: faltam índices" if res.parcial else "Completo"),
     ]
