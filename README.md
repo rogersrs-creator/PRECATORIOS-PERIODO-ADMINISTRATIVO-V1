@@ -1,4 +1,4 @@
-# Período administrativo dos precatórios · App Streamlit (versão local 7)
+# Período administrativo dos precatórios · App Streamlit (versão local 8)
 
 Calcula a atualização do valor **da data-base do cálculo homologado até a data-base dos cálculos da
 proposta orçamentária** indicada, com as regras do deck v9 (Período administrativo). Mesma base de código e
@@ -120,3 +120,17 @@ Caso real da proposta 2027 (data-base 07/2025, principal 108.601,00, Selic 35.15
 sistema dá 110.140,43 / 917,83 / 38.342,61. O app passou a truncar a SELIC em centavos no fim do trecho 2 (antes do
 IPCA), o que fecha esse caso ao centavo (X18 em dados/CASOS-CERTIFICADOS.csv). Se a data-base é de 12/2021 em diante
 e a Selic vem zerada com juros preenchidos, o app avisa (provável SELIC lançada no campo Juros).
+
+## v8 – Colar os dados da tela do sistema
+
+Em "📋 Colar os dados da tela do sistema", cole as linhas copiadas do sistema e clique em Importar:
+
+```
+Valor Principal 108.601,00 Data Base 01/07/2025
+Valor Selic 35.156,84 Data Base 01/07/2025
+Juros de mora fixados na sentença: Não incidem
+```
+
+O app preenche data-base, principal, juros, Selic e OBS-JUROS para conferência. Linhas "Valor Juros" também são
+lidas; valores repetidos são somados (com aviso); datas-base diferentes impedem a importação; texto de juros de mora
+fora das quatro regras deixa a OBS-JUROS em branco e avisa. Código em `importacao.py`.
