@@ -1,4 +1,4 @@
-# Período administrativo dos precatórios · App Streamlit (versão local 8)
+# Período administrativo dos precatórios · App Streamlit (versão local 9)
 
 Calcula a atualização do valor **da data-base do cálculo homologado até a data-base dos cálculos da
 proposta orçamentária** indicada, com as regras do deck v9 (Período administrativo). Mesma base de código e
@@ -47,7 +47,8 @@ Trechos (cada um só entra se estiver entre a data-base e a data final):
    Principal zero: sem juros novos.
 2. **12/2021 a 08/2025:** SELIC simples, uma vez, sobre principal + juros consolidados (qualquer OBS-JUROS).
 3. **Desde 09/2025 (propostas 2027+):** IPCA sobre tudo e 2% a.a. simples sobre o principal corrigido.
-   Se em algum mês IPCA + 0,1667% passar da SELIC, o app avisa (regra ainda a definir).
+   Mês a mês, se a SELIC for menor que (1 + IPCA) x (1 + 0,1667%) - 1, nesse mês vale a SELIC só sobre o
+   principal, lançada no campo Selic, sem IPCA (como no V6).
 
 **Data final:** coluna DATA_BASE_INICIAL_CALCULOS da planilha GRACA (propostas 2012–2027). Para outros anos,
 a data-limite da CF, art. 100, § 5º: 1º/jul do ano anterior até 2022, abril em 2023–2026 e 1º/fev desde 2027
@@ -134,3 +135,9 @@ Juros de mora fixados na sentença: Não incidem
 O app preenche data-base, principal, juros, Selic e OBS-JUROS para conferência. Linhas "Valor Juros" também são
 lidas; valores repetidos são somados (com aviso); datas-base diferentes impedem a importação; texto de juros de mora
 fora das quatro regras deixa a OBS-JUROS em branco e avisa. Código em `importacao.py`.
+
+## v9 – Regras confirmadas
+
+- Data-base em 2000 com juros do título: os juros contam desde a data-base, inclusive os meses de 2000 (sem aviso).
+- Teto da SELIC desde 09/2025: no mês em que a SELIC é menor que IPCA + 2% a.a., a SELIC incide só sobre o
+  principal e vai para o campo Selic; nesse mês não há IPCA. Até 08/2026 isso não aconteceu em nenhum mês.

@@ -17,7 +17,9 @@ Trecho 2 · 12/2021 a 08/2025: SELIC simples, uma única vez, sobre principal + 
            Incide qualquer que seja a OBS-JUROS.
 Trecho 3 · desde 09/2025 (propostas 2027 em diante): IPCA sobre principal, juros e SELIC e
            2% a.a. simples (0,1667% a.m.) sobre o principal corrigido, limitados à SELIC
-           (EC 136/2025; Res. CJF 983/2026, art. 7º, § 3º, III). Os 2% valem também quando a
+           (EC 136/2025; Res. CJF 983/2026, art. 7º, § 3º, III). Mês a mês, se a SELIC for menor que
+           (1 + IPCA) x (1 + 0,1667%) - 1, nesse mês vale a SELIC só sobre o principal, lançada no campo
+           Selic, sem IPCA (como no V6; decisão de 19/11/2026). Os 2% valem também quando a
            OBS-JUROS é "Não incidem" (decisão de 19/11/2026); principal zero, sem 2%.
 """
 from __future__ import annotations
@@ -115,10 +117,7 @@ class UniaoNaoTributario(Regra):
             for k in meses(db, min((2001, 1), fim)):
                 js_2000 += taxa_juros(k)
             js += js_2000
-            if js_2000:
-                res.avisos.append(
-                    "Data-base em 2000 com juros do título: os juros dos meses de 2000 foram contados desde a "
-                    "data-base. Nenhum caso certificado testa essa situação (o X02 não tem juros); confirme a regra.")
+            # Juros contados desde a data-base, inclusive em 2000 (confirmado pelo Rogers em 19/11/2026).
             f *= f2000
             linhas.append(Linha(f"{rotulo(db)} a 12/2000", "0 · UFIR / IPCA-E de 2000",
                                 "UFIR fixa em 2000; em 01/2001, IPCA-E acumulado de jan a dez/2000 "
@@ -193,31 +192,37 @@ class UniaoNaoTributario(Regra):
         # ---------------- Trecho 3: IPCA + 2% a.a. desde 09/2025 ----------------
         ini3 = max(db, INICIO_IPCA)
         if ini3 < fim:
-            P1, J1, S1 = P, J, S
-            fa, n = 1.0, 0
+            fa, n, n_selic = 1.0, 0, 0
             for k in meses(ini3, fim):
                 if falta(b.ipca, k):
                     break
+                jr = JUROS_EC136_MES if tem_principal else 0.0
+                composto = ((1 + b.ipca[k] / 100) * (1 + jr / 100) - 1) * 100
+                sel = b.selic[k] if k in b.selic else None
+                if sel is not None and sel < composto:
+                    # Mês em que a SELIC é menor: SELIC só sobre o principal, lançada no campo Selic;
+                    # principal, juros e Selic não recebem IPCA (decisão do Rogers, 19/11/2026; regra do V6).
+                    n_selic += 1
+                    S = S + P * sel / 100
+                    linhas.append(Linha(rotulo(k), "3 · SELIC menor (EC 136)",
+                                        f"SELIC ({sel:.2f}%) menor que IPCA + 2% a.a. ({composto:.4f}%): SELIC só "
+                                        "sobre o principal, no campo Selic", b.ipca[k], None, sel, f * fa, js, s,
+                                        P, J, S))
+                    continue
                 fa *= 1 + b.ipca[k] / 100
                 n += 1
-                jr = JUROS_EC136_MES if tem_principal else 0.0
-                sel = b.selic[k] if k in b.selic else None
-                if sel is not None and (b.ipca[k] + jr) > sel:
-                    res.avisos.append(
-                        f"{rotulo(k)}: IPCA + 2% a.a. ({b.ipca[k] + jr:.4f}%) ficou ACIMA da SELIC ({sel:.4f}%). "
-                        "Pela EC 136 vale a SELIC nesse mês, mas a forma (sobre o principal ou sobre o "
-                        "consolidado) ainda não foi definida para o período administrativo. O cálculo abaixo "
-                        "manteve IPCA + 2% a.a.; não use o resultado sem conferir.")
-                P = P1 * fa
-                J = J1 * fa + (P * n * JUROS_EC136_MES / 100 if tem_principal else 0.0)
-                S = S1 * fa
+                P = P * (1 + b.ipca[k] / 100)
+                J = J * (1 + b.ipca[k] / 100) + P * jr / 100
+                S = S * (1 + b.ipca[k] / 100)
                 linhas.append(Linha(rotulo(k), "3 · IPCA + 2% a.a. (EC 136)",
                                     "IPCA sobre tudo" + (" + 2% a.a. simples sobre o principal" if tem_principal
                                                          else "") + " (EC 136/2025; Res. CJF 983/2026)",
                                     b.ipca[k], jr or None, sel, f * fa, js, s, P, J, S))
             res.trechos.append(dict(trecho="3 · IPCA + 2% a.a. (EC 136)", de=rotulo(ini3),
                                     ate=rotulo(anterior(fim)) if not res.parcial else "parcial",
-                                    descricao=f"IPCA {(fa - 1) * 100:.4f}%; {n} meses de 2% a.a."))
+                                    descricao=f"IPCA {(fa - 1) * 100:.4f}%; {n} meses de IPCA + 2% a.a."
+                                              + (f"; {n_selic} meses com a SELIC menor (só sobre o principal)"
+                                                 if n_selic else "")))
         return self._fechar(res, P, J, S)
 
     @staticmethod
