@@ -70,7 +70,7 @@ with st.sidebar:
 if pagina == "Conferência dos casos certificados":
     import conferencia as conf
     st.title("✅ Conferência dos casos certificados")
-    st.caption("Refaz os 15 casos certificados da União (não tributários) com os índices carregados e o motor "
+    st.caption("Refaz os casos certificados da União (não tributários) com os índices carregados e o motor "
                f"atual e compara o total (tolerância de R$ {conf.TOLERANCIA:.2f}; os centavos vêm de "
                "arredondamento). Casos em dados/CASOS-CERTIFICADOS.csv.")
     linhas = conf.conferir_todos(bases, df_graca)
@@ -164,6 +164,10 @@ if enviar:
         st.session_state.pop("resultado", None)
     else:
         entrada = Entrada(esfera, natureza, ano, (data_base.year, data_base.month), principal, juros, obs, selic)
+        if juros > 0 and selic == 0 and (data_base.year, data_base.month) >= (2021, 12):
+            st.warning("Data-base a partir de 12/2021 com **Juros** preenchidos e **Selic** zerada. Se o valor "
+                       "informado em Juros for a SELIC do cálculo homologado, mova-o para o campo **Selic**: a SELIC "
+                       "fica no próprio campo e não recebe SELIC de novo.")
         try:
             st.session_state["resultado"] = calcular(entrada, bases, df_graca)
         except (ValueError, NotImplementedError) as e:

@@ -49,6 +49,10 @@ def fator_2000() -> float:
     return f
 
 
+# Etapas em que os valores são truncados em centavos antes do trecho seguinte (além do fim do cálculo).
+TRUNCAR_ETAPAS: set[str] = {"selic"}  # SELIC truncada ao fim de 08/2025 (caso X18, 19/11/2026)
+
+
 def truncar(v: float) -> float:
     """Trunca em centavos (sem arredondar), como nos cálculos certificados."""
     return float(Decimal(repr(v)).quantize(Decimal("0.01"), rounding=ROUND_DOWN))
@@ -153,6 +157,8 @@ class UniaoNaoTributario(Regra):
                                 P0 * f, J0 * f + P0 * f * js / 100, 0.0))
         P = P0 * f
         J = J0 * f + P * js / 100
+        if "ipcae" in TRUNCAR_ETAPAS and ini1 < fim1:
+            P, J = truncar(P), truncar(J)
         S = S0
         if ini1 < fim1:
             res.trechos.append(dict(trecho="1 · IPCA-E + juros do título", de=rotulo(ini1),
@@ -175,6 +181,8 @@ class UniaoNaoTributario(Regra):
                 linhas.append(Linha(rotulo(k), "2 · SELIC (EC 113)",
                                     "SELIC simples sobre principal + juros consolidados (EC 113/2021, art. 3º)",
                                     None, None, b.selic[k], f, js, s, P, J, S))
+            if "selic" in TRUNCAR_ETAPAS:
+                S = truncar(S)
             res.trechos.append(dict(trecho="2 · SELIC simples (EC 113)", de=rotulo(ini2),
                                     ate=rotulo(anterior(fim2)),
                                     descricao=f"SELIC somada {s:.4f}% sobre {base:,.2f}"

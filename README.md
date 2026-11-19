@@ -1,4 +1,4 @@
-# Período administrativo dos precatórios · App Streamlit (versão local 6)
+# Período administrativo dos precatórios · App Streamlit (versão local 7)
 
 Calcula a atualização do valor **da data-base do cálculo homologado até a data-base dos cálculos da
 proposta orçamentária** indicada, com as regras do deck v9 (Período administrativo). Mesma base de código e
@@ -87,7 +87,7 @@ dados/              CSV de reserva + CASOS-CERTIFICADOS.csv (15 casos, sem núme
 
 ## Conferência
 
-Os 15 casos certificados da União (não tributários, propostas 2015–2027) fecham com diferença de no máximo
+Os casos certificados da União (não tributários, propostas 2015–2027) fecham com diferença de no máximo
 R$ 0,67, só de arredondamento. A regra de arredondamento ainda será definida.
 
 ## v3 – Entrada no formato do app V6
@@ -113,3 +113,10 @@ e X05 (−0,26) diferem porque os certificados calculam o IPCA-E longo pela raz�
 
 A base IPCAE_SEM_TR passa a ser lida da planilha do Drive (link em `config.py`), como as demais. O CSV da pasta
 `dados/` continua como reserva ("Usar só os arquivos locais").
+
+## v7 – SELIC truncada ao fim de 08/2025 e caso X18
+
+Caso real da proposta 2027 (data-base 07/2025, principal 108.601,00, Selic 35.156,84, juros não incidem): o
+sistema dá 110.140,43 / 917,83 / 38.342,61. O app passou a truncar a SELIC em centavos no fim do trecho 2 (antes do
+IPCA), o que fecha esse caso ao centavo (X18 em dados/CASOS-CERTIFICADOS.csv). Se a data-base é de 12/2021 em diante
+e a Selic vem zerada com juros preenchidos, o app avisa (provável SELIC lançada no campo Juros).
