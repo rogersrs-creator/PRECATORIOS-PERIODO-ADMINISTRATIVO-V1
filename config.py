@@ -5,14 +5,13 @@ Cole o link da ABA correta (termina em '#gid=NUMERO'). Se um link ficar vazio ("
 CSV correspondente da pasta 'dados/'. Para rodar sem internet, marque "Usar só os arquivos
 locais" na barra lateral do app (ou rode `python conferencia.py --local`).
 
-A IPCAE-SEM-TR ainda não tem planilha no Drive: por enquanto vem de dados/IPCAE-SEM-TR.csv.
-Quando ela for criada no Drive (colunas data;variacao-mes;n_indice), cole o link aqui.
+A IPCAE-SEM-TR está no Drive desde 19/11/2026 (aba única IPCAE-SEM-TR); dados/IPCAE-SEM-TR.csv fica como reserva.
 """
 import sys
 
 PLANILHAS = {
     # IPCA-E sem TR (07/2000 = 1). colunas: data;variacao-mes;n_indice
-    "IPCAE_SEM_TR": "",
+    "IPCAE_SEM_TR": "https://docs.google.com/spreadsheets/d/1YirgR_GKC8Oc7JN7uOHJyAsmCLX4slkxaBY0IwhXGn4/edit?gid=0#gid=0",
     # colunas: data;variacao-mes;n_indice  (mesma planilha do V6)
     "POUPANCA": "https://docs.google.com/spreadsheets/d/15p8EWBw9N19uyQzsxgip42OuOPQIyAnV-zwAk7PPOKE/edit?gid=1434923967#gid=1434923967",
     # colunas: data;variacao-mes;n_indice  (mesma planilha do V6)

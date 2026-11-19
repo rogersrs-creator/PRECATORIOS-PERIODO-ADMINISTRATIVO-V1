@@ -1,4 +1,4 @@
-# Período administrativo dos precatórios · App Streamlit (versão local 5)
+# Período administrativo dos precatórios · App Streamlit (versão local 6)
 
 Calcula a atualização do valor **da data-base do cálculo homologado até a data-base dos cálculos da
 proposta orçamentária** indicada, com as regras do deck v9 (Período administrativo). Mesma base de código e
@@ -58,7 +58,7 @@ marca o resultado como **PARCIAL**.
 
 | Base | Origem | Uso |
 |---|---|---|
-| IPCAE_SEM_TR | `dados/IPCAE-SEM-TR.csv` (nova; ainda sem planilha no Drive) | correção até 11/2021 |
+| IPCAE_SEM_TR | planilha no Drive (desde a v6), com `dados/IPCAE-SEM-TR.csv` de reserva | correção até 11/2021 |
 | POUPANCA | mesma planilha do V6 | juros da poupança |
 | SELIC | mesma planilha do V6 | trecho 2 e limite do trecho 3 |
 | IPCA | mesma planilha do V6 | trecho 3 |
@@ -108,3 +108,8 @@ Como nos cálculos certificados, principal, juros e SELIC são **truncados** em 
 arredondados). Conferência: 8 dos 15 casos fecham em 0,00 e 3 em ±0,01–0,05; X01 (+0,66), X02 (+0,42), X04 (+0,16)
 e X05 (−0,26) diferem porque os certificados calculam o IPCA-E longo pela razão entre números-índice do IBGE
 (2 casas), e o app encadeia as variações mensais. Para zerar também esses, falta a série de números-índice do IPCA-E.
+
+## v6 – IPCAE-SEM-TR no Drive
+
+A base IPCAE_SEM_TR passa a ser lida da planilha do Drive (link em `config.py`), como as demais. O CSV da pasta
+`dados/` continua como reserva ("Usar só os arquivos locais").
