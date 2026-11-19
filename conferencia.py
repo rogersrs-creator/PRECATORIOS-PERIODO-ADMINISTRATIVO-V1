@@ -15,7 +15,7 @@ import os
 from fontes import PASTA_DADOS, para_numero
 from motores import Entrada, calcular
 
-TOLERANCIA = 1.00  # R$; diferenças de centavos vêm de arredondamento (regra ainda a definir)
+TOLERANCIA = 1.00  # R$; os centavos que sobram vêm do IPCA-E encadeado (ver README, arredondamento)
 ARQUIVO_CASOS = os.path.join(PASTA_DADOS, "CASOS-CERTIFICADOS.csv")
 
 

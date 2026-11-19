@@ -22,6 +22,8 @@ Trecho 3 · desde 09/2025 (propostas 2027 em diante): IPCA sobre principal, juro
 """
 from __future__ import annotations
 
+from decimal import ROUND_DOWN, Decimal
+
 from motores.base import (Bases, Entrada, Linha, Mes, Regra, Resultado, anterior, meses,
                           proximo, rotulo)
 
@@ -45,6 +47,11 @@ def fator_2000() -> float:
     for v in IPCAE_2000:
         f *= 1 + v / 100
     return f
+
+
+def truncar(v: float) -> float:
+    """Trunca em centavos (sem arredondar), como nos cálculos certificados."""
+    return float(Decimal(repr(v)).quantize(Decimal("0.01"), rounding=ROUND_DOWN))
 
 
 class UniaoNaoTributario(Regra):
@@ -207,5 +214,6 @@ class UniaoNaoTributario(Regra):
 
     @staticmethod
     def _fechar(res: Resultado, P: float, J: float, S: float) -> Resultado:
-        res.principal, res.juros, res.selic = P, J, S
+        # Os cálculos certificados truncam os centavos (decisão de 19/11/2026): cada parcela é truncada.
+        res.principal, res.juros, res.selic = truncar(P), truncar(J), truncar(S)
         return res
