@@ -172,7 +172,8 @@ with st.expander("📋 Colar os dados da tela do sistema", expanded=False):
 with st.form("form_calculo"):
     st.subheader("Dados do processo")
     c1, c2, c3, *c4 = st.columns(4 if selic_obrigatorio else 3)
-    data_base = c1.date_input("Data-base do cálculo", key="data_base", min_value=date(2000, 1, 1),
+    data_base = c1.date_input("Data-base do cálculo", key="data_base",
+                              min_value=date(1996, 1, 1) if tributario else date(2000, 1, 1),
                               max_value=fim_ts, format="DD/MM/YYYY",
                               help="Data-base do cálculo homologado. Só o mês/ano é considerado (o dia é ajustado "
                                    "para 1º).")

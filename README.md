@@ -27,7 +27,7 @@ Conferência pela linha de comando: `python conferencia.py` (Google Sheets) ou `
 | Esfera | Natureza | Situação |
 |---|---|---|
 | Nacional (União) | Não tributário | **Pronto**, propostas de 2001 em diante |
-| Nacional (União) | Tributário | **Pronto** (v12), data-base desde 01/2003 |
+| Nacional (União) | Tributário | **Pronto** (v13), data-base desde 01/1996 |
 | Subnacional | Não tributário / Tributário | aguardando as regras |
 
 ### Entradas
@@ -51,7 +51,7 @@ O app preenche o formulário para conferência. Linhas "Valor Juros" também sã
 (com aviso); datas-base diferentes impedem a importação; texto de juros de mora fora das quatro regras deixa a
 OBS-JUROS em branco e avisa. Em proposta até 2026, um "Valor Selic" colado é somado aos juros, com aviso.
 
-### Tributário (União) · v12
+### Tributário (União) · v12–v13
 
 Regra deduzida dos 7 casos tributários homologados (T01–T07, propostas 2023 a 2027, em
 `dados/CASOS-TRIBUTARIOS.csv`), que fecham ao centavo:
@@ -64,7 +64,9 @@ Regra deduzida dos 7 casos tributários homologados (T01–T07, propostas 2023 a
 - **Centavos:** SELIC arredondada até a proposta 2026 (T03, T04, T05) e truncada desde a 2027 (T06).
 - Normas: EC 113/2021, art. 3º, § 2º (redação da EC 136/2025); Provimento CNJ 207/2025, art. 4º; Res. CJF
   983/2026, art. 7º, caput e § 4º, e art. 8º, § 1º; Res. CNJ 303/2019, art. 22 (juros de mora só nos não tributários).
-- A planilha SELIC começa em 01/2003: data-base anterior ainda não é atendida.
+- Data-base desde 01/1996 (Lei 9.250/1995, art. 39, § 4º). A SELIC de 01/1996 a 12/2002 vem do Banco Central
+  (SGS 4390) em `motores/selic_historica.py`; desde 01/2003, da planilha SELIC do V6. A regra é a mesma para
+  qualquer proposta (confirmado pelo Rogers em 24/11/2026; o V6 também usa uma só regra tributária).
 
 ### Data final
 

@@ -16,6 +16,10 @@ centavo, e conferida nas normas da fase de requisitórios:
 - O principal não muda. Os juros informados (a SELIC já apurada no cálculo homologado) também não mudam
   e não recebem SELIC (sem capitalização: Res. CJF 983/2026, art. 7º, § 4º). A SELIC nova é somada aos
   juros, inclusive na proposta 2027 (nos casos T06 e T07 o campo SELIC-PROPOSTA é zero).
+- Data-base desde 01/1996 (Lei 9.250/1995, art. 39, § 4º). SELIC de 01/1996 a 12/2002 em
+  motores/selic_historica.py (BCB, SGS 4390); a partir de 01/2003, a planilha SELIC do V6. O Rogers
+  confirmou (24/11/2026) que a regra é a mesma para os tributários antigos; o V6 também usa uma só regra
+  tributária para todas as propostas.
 - Centavos: até a proposta 2026 a SELIC apurada é ARREDONDADA (T03, T04 e T05 só fecham arredondando);
   desde a proposta 2027 é TRUNCADA (T06 só fecha truncando, como o X18 dos não tributários).
   Regra deduzida dos casos; aguarda confirmação do Rogers.
@@ -24,6 +28,7 @@ from __future__ import annotations
 
 from decimal import ROUND_DOWN, ROUND_HALF_UP, Decimal
 
+from motores.selic_historica import INICIO_SELIC_TRIBUTARIO, SELIC_1996_2002
 from motores.base import Bases, EmDesenvolvimento, Entrada, Linha, Mes, Regra, Resultado, anterior, meses, rotulo
 
 OBS_TRIBUTARIO = "Não se aplica (tributário)"
@@ -48,10 +53,12 @@ class UniaoTributario(Regra):
     def calcular(self, e: Entrada, b: Bases, fim: Mes, origem: str) -> Resultado:
         res = Resultado(entrada=e, data_final=fim, origem_data_final=origem)
         db = e.data_base
-        primeiro = min(b.selic.var) if b.selic.var else None
-        if primeiro is None or db < primeiro:
-            raise ValueError(f"A planilha SELIC começa em {rotulo(primeiro) if primeiro else '—'}: data-base "
-                             f"{rotulo(db)} ainda não é atendida no módulo tributário.")
+        if db < INICIO_SELIC_TRIBUTARIO:
+            raise ValueError(f"Data-base {rotulo(db)} anterior a 01/1996: a SELIC só vale para tributos federais "
+                             "desde 01/1996 (Lei 9.250/1995, art. 39, § 4º); a regra anterior (UFIR) ainda não "
+                             "foi definida para o aplicativo.")
+        # Meses de 01/1996 a 12/2002 vêm da série do BCB (SGS 4390); depois, da planilha SELIC do V6.
+        taxa = lambda k: b.selic[k] if k in b.selic else SELIC_1996_2002.get(k)  # noqa: E731
         if db >= fim:
             raise ValueError(f"A data-base ({rotulo(db)}) precisa ser anterior à data final da proposta "
                              f"{e.ano_proposta} ({rotulo(fim)}).")
@@ -65,19 +72,19 @@ class UniaoTributario(Regra):
         s = 0.0
         ultimo = None
         for k in meses(db, fim):
-            if k not in b.selic:
+            if taxa(k) is None:
                 res.parcial = True
                 res.avisos.append(
                     f"Cálculo PARCIAL: a planilha SELIC não tem a taxa de {rotulo(k)} (última: "
                     f"{rotulo(b.selic.ultimo) if b.selic.ultimo else '—'}). O resultado vai até "
                     f"{rotulo(anterior(k))}, e não até a data final da proposta ({rotulo(fim)}).")
                 break
-            s += b.selic[k]
+            s += taxa(k)
             ultimo = k
             res.linhas.append(Linha(rotulo(k), "SELIC (tributário)",
                                     "SELIC simples só sobre o principal (EC 113/2021, art. 3º, § 2º; "
                                     "Prov. CNJ 207/2025, art. 4º)",
-                                    None, None, b.selic[k], 1.0, 0.0, s, P0, J0 + P0 * s / 100, 0.0))
+                                    None, None, taxa(k), 1.0, 0.0, s, P0, J0 + P0 * s / 100, 0.0))
         selic_nova = centavos(P0 * s / 100, e.ano_proposta)
         modo = "truncada" if e.ano_proposta >= ANO_TRUNCA else "arredondada"
         if ultimo:
