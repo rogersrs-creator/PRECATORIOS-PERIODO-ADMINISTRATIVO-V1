@@ -14,8 +14,6 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-No Windows, basta dar dois cliques em `INICIAR-WINDOWS.bat`. O app abre no navegador.
-
 Na web (Streamlit Cloud): share.streamlit.io › Create app › este repositório › branch `main` › arquivo `app.py` ›
 Deploy. Não precisa de Secrets nem de senha: o app só lê planilhas públicas.
 
