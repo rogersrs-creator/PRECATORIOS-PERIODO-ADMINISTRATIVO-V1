@@ -27,7 +27,7 @@ Conferência pela linha de comando: `python conferencia.py` (Google Sheets) ou `
 | Esfera | Natureza | Situação |
 |---|---|---|
 | Nacional (União) | Não tributário | **Pronto**, propostas de 2001 em diante |
-| Nacional | Tributário | aguardando a regra |
+| Nacional (União) | Tributário | **Pronto** (v12), data-base desde 01/2003 |
 | Subnacional | Não tributário / Tributário | aguardando as regras |
 
 ### Entradas
@@ -50,6 +50,21 @@ Juros de mora fixados na sentença: Não incidem
 O app preenche o formulário para conferência. Linhas "Valor Juros" também são lidas; valores repetidos são somados
 (com aviso); datas-base diferentes impedem a importação; texto de juros de mora fora das quatro regras deixa a
 OBS-JUROS em branco e avisa. Em proposta até 2026, um "Valor Selic" colado é somado aos juros, com aviso.
+
+### Tributário (União) · v12
+
+Regra deduzida dos 7 casos tributários homologados (T01–T07, propostas 2023 a 2027, em
+`dados/CASOS-TRIBUTARIOS.csv`), que fecham ao centavo:
+
+- **SELIC simples só sobre o principal**, do mês da data-base (inclusive) ao mês anterior à data-base da
+  proposta. Sem IPCA-E, IPCA, juros do título, poupança ou 2% a.a., e sem troca de regime em 12/2021 ou 09/2025.
+- O principal não muda; os juros informados (SELIC já apurada) não mudam e não recebem SELIC; a SELIC nova é
+  **somada aos juros**, inclusive na proposta 2027 (SELIC-PROPOSTA = 0 nos casos).
+- Sem OBS-JUROS e sem campo Selic: um "Valor Selic" colado vai para os juros.
+- **Centavos:** SELIC arredondada até a proposta 2026 (T03, T04, T05) e truncada desde a 2027 (T06).
+- Normas: EC 113/2021, art. 3º, § 2º (redação da EC 136/2025); Provimento CNJ 207/2025, art. 4º; Res. CJF
+  983/2026, art. 7º, caput e § 4º, e art. 8º, § 1º; Res. CNJ 303/2019, art. 22 (juros de mora só nos não tributários).
+- A planilha SELIC começa em 01/2003: data-base anterior ainda não é atendida.
 
 ### Data final
 

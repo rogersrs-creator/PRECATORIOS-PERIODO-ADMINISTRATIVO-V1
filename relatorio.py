@@ -45,10 +45,13 @@ def gerar_excel(res: Resultado) -> bytes:
         ("SELIC na data-base", float(e.selic or 0)),
         (None, None),
         (f"Valores na proposta {e.ano_proposta}",
+         "tributário: SELIC somada aos juros, principal sem correção" if e.natureza == "Tributário" else
          "SELIC em campo próprio" if e.ano_proposta >= 2027 else "até 2026 não há campo Selic: SELIC somada aos juros"),
         *[(k, float(v)) for k, v in res.posicao_proposta().items()
           if e.ano_proposta >= 2027 or k != "SELIC-PROPOSTA"],
         *([("   dos quais SELIC (12/2021 em diante)", res.selic)] if e.ano_proposta < 2027 and res.selic else []),
+        *([("   dos quais SELIC do período (tributário)", round(res.juros - e.juros - float(e.selic or 0), 2))]
+          if e.natureza == "Tributário" else []),
         (None, None),
         ("Situação", "PARCIAL: faltam índices" if res.parcial else "Completo"),
     ]
@@ -77,8 +80,9 @@ def gerar_excel(res: Resultado) -> bytes:
             r += 1
             ws.cell(r, 1, a)
     r += 2
-    ws.cell(r, 1, "Arredondamento: os valores não são arredondados mês a mês (regra a definir). "
-                  "A memória mês a mês está na aba Memoria.")
+    ws.cell(r, 1, ("Centavos: SELIC arredondada até a proposta 2026 e truncada desde a 2027 (casos T01 a T07). "
+                   if e.natureza == "Tributário" else "Centavos: valores truncados ao fim do cálculo (casos X). ")
+            + "A memória mês a mês está na aba Memoria.")
     for i, w in enumerate([34, 12, 40, 70], 1):
         ws.column_dimensions[get_column_letter(i)].width = w
 

@@ -16,6 +16,7 @@ from fontes import carregar_todas, para_numero
 from motores import ESFERAS, NATUREZAS, Bases, Entrada, calcular, data_final, regra_para
 from motores.base import rotulo
 from motores.nacional.uniao import OBS_JUROS
+from motores.tributario import OBS_TRIBUTARIO
 from importacao import brl as fmt_imp, importar_dados
 from relatorio import brl, gerar_excel, tabela
 
@@ -75,7 +76,7 @@ with st.sidebar:
 if pagina == "Conferência dos casos certificados":
     import conferencia as conf
     st.title("✅ Conferência dos casos certificados")
-    st.caption("Refaz os casos certificados da União (não tributários) com os índices carregados e o motor "
+    st.caption("Refaz os casos certificados da União (não tributários X e tributários T) com os índices carregados e o motor "
                f"atual e compara o total (tolerância de R$ {conf.TOLERANCIA:.2f}; os centavos vêm de "
                "arredondamento). Casos em dados/CASOS-CERTIFICADOS.csv.")
     linhas = conf.conferir_todos(bases, df_graca)
@@ -83,7 +84,7 @@ if pagina == "Conferência dos casos certificados":
     ok = (df["situacao"] == "Fecha").sum()
     (st.success if ok == len(df) else st.error)(f"{ok} de {len(df)} casos fecham.")
     st.dataframe(df.rename(columns={"caso": "Caso", "proposta": "Proposta", "data_base": "Data-base",
-                                    "obs_juros": "OBS-JUROS aplicada", "obs_na_base": "OBS-JUROS na base",
+                                    "natureza": "Natureza", "obs_juros": "OBS-JUROS aplicada", "obs_na_base": "OBS-JUROS na base",
                                     "calculado": "Calculado", "certificado": "Certificado",
                                     "diferenca": "Diferença", "selic_proposta": "SELIC-PROPOSTA calculada",
                                     "selic_certificada": "SELIC-PROPOSTA certificada", "situacao": "Situação"}),
@@ -100,7 +101,7 @@ st.caption("Atualização do valor da data-base do cálculo homologado até a da
 c_esf, c_nat, c_ano, c_reg = st.columns([1.2, 1.1, 1, 3])
 esfera = c_esf.radio("Esfera", list(ESFERAS), horizontal=True)
 natureza = c_nat.radio("Natureza", NATUREZAS, horizontal=True,
-                       help="Tributário: regra a ser informada.")
+                       help="Tributário (União): SELIC simples só sobre o principal, somada aos juros.")
 anos_graca = sorted(df_graca["ANO_PROPOSTA"].unique().tolist())
 anos_disponiveis = list(range(max(anos_graca[-1] if anos_graca else 2027, date.today().year) + 3, 2000, -1))
 ano = c_ano.selectbox("Ano da proposta", anos_disponiveis, index=None, placeholder="Selecione o ano...",
@@ -109,7 +110,7 @@ ano = c_ano.selectbox("Ano da proposta", anos_disponiveis, index=None, placehold
 regra = regra_para(esfera, ano or 2028, natureza)
 if regra is None or not regra.disponivel:
     st.info(f"O modelo de cálculo para **{esfera} · {natureza}** ainda está em desenvolvimento "
-            f"({regra.descricao if regra else 'sem regime'}). Selecione **Nacional · Não Tributário** para calcular.")
+            f"({regra.descricao if regra else 'sem regime'}). Selecione **Nacional** para calcular.")
     st.stop()
 if ano is None:
     st.stop()
@@ -120,7 +121,9 @@ c_reg.info(f"**Regime:** {regra.nome}. {regra.descricao}\n\n"
            f"**Data-base da proposta {ano}:** {fim_ts:%d/%m/%Y} ({origem_fim}). "
            f"As variações entram até o mês anterior.")
 
-selic_obrigatorio = ano >= 2027
+tributario = natureza == "Tributário"
+# Tributário: não há campo Selic separado nem OBS-JUROS; a SELIC já apurada fica nos juros (casos T01 a T07).
+selic_obrigatorio = ano >= 2027 and not tributario
 
 for _k, _v in (("principal_txt", ""), ("juros_txt", "0,00"), ("selic_txt", ""), ("data_base", None), ("obs", None)):
     st.session_state.setdefault(_k, _v)
@@ -147,8 +150,11 @@ with st.expander("📋 Colar os dados da tela do sistema", expanded=False):
                 st.session_state["juros_txt"] = fmt_imp((imp["juros"] or 0.0) + (imp["selic"] or 0.0))
                 st.session_state["selic_txt"] = ""
                 if imp["selic"]:
-                    imp["avisos"].append(f"Proposta {ano}: até 2026 não há campo Selic. O Valor Selic "
-                                         f"({fmt_imp(imp['selic'])}) foi somado aos juros.")
+                    imp["avisos"].append((f"Tributário: não há campo Selic. O Valor Selic "
+                                          if tributario else f"Proposta {ano}: até 2026 não há campo Selic. O Valor Selic ")
+                                         + f"({fmt_imp(imp['selic'])}) foi somado aos juros.")
+            if tributario:
+                imp["avisos"] = [a for a in imp["avisos"] if "OBS-JUROS" not in a and "Juros de mora" not in a]
             st.session_state["data_base"] = imp["data_base"]
             st.session_state["obs"] = imp["obs_juros"]
             st.session_state.pop("resultado", None)
@@ -172,7 +178,8 @@ with st.form("form_calculo"):
                                    "para 1º).")
     principal_txt = c2.text_input("Valor principal (R$)", placeholder="Ex.: 871,04", key="principal_txt")
     juros_txt = c3.text_input("Juros (R$)", key="juros_txt",
-                              help=None if selic_obrigatorio else "Até a proposta 2026 a SELIC já existente no cálculo "
+                              help="Tributário: a SELIC já apurada no cálculo homologado. Não recebe SELIC de novo."
+                              if tributario else None if selic_obrigatorio else "Até a proposta 2026 a SELIC já existente no cálculo "
                                                                   "homologado entra aqui, somada aos juros.")
     if selic_obrigatorio:
         selic_txt = c4[0].text_input("Selic (R$) *", placeholder="Obrigatório (ex.: 0,00)", key="selic_txt",
@@ -181,9 +188,14 @@ with st.form("form_calculo"):
                                           "houver.")
     else:
         selic_txt = ""   # até a proposta 2026 a SELIC já existente faz parte dos juros
-    obs = st.radio("OBS-JUROS (obrigatória)", OBS_JUROS, horizontal=True, key="obs",
-                   help="O que a sentença fixou sobre juros de mora. Em branco ou 'sem informação' não é regra "
-                        "válida: escolha uma das quatro.")
+    if tributario:
+        obs = OBS_TRIBUTARIO
+        st.caption("Tributário: não há OBS-JUROS. Incide só a SELIC simples sobre o principal "
+                   "(EC 113/2021, art. 3º, § 2º; Provimento CNJ 207/2025, art. 4º).")
+    else:
+        obs = st.radio("OBS-JUROS (obrigatória)", OBS_JUROS, horizontal=True, key="obs",
+                       help="O que a sentença fixou sobre juros de mora. Em branco ou 'sem informação' não é regra "
+                            "válida: escolha uma das quatro.")
     enviar = st.form_submit_button("Calcular", type="primary", width="stretch")
 
 if enviar:
@@ -204,7 +216,7 @@ if enviar:
             erros.append("Informe um valor de **Selic** válido (ex.: 1.234,56).")
     if data_base is None:
         erros.append("Informe a **data-base do cálculo**.")
-    if obs not in OBS_JUROS:
+    if obs not in OBS_JUROS and not tributario:
         erros.append("Escolha a **OBS-JUROS**: 1% ao mês, 0,5% ao mês, Poupança ou Não incidem.")
     if erros:
         for e in erros:
@@ -239,7 +251,9 @@ if res:
         m1.metric("Principal", brl(pos["VALOR-PRINCIPAL-PROPOSTA"]))
         m2.metric("Juros", brl(pos["VALOR-JUROS-PROPOSTA"]))
         m3.metric("Total", brl(pos["TOTAL-PROPOSTA"]))
-        if res.selic:
+        if res.entrada.natureza == "Tributário":
+            st.caption("Tributário: a SELIC do período está somada aos juros; o principal não muda.")
+        elif res.selic:
             st.caption(f"Até a proposta 2026 não há campo Selic: a SELIC de 12/2021 em diante "
                        f"({brl(res.selic)}) está somada aos juros ({brl(res.juros)} + {brl(res.selic)}).")
     st.subheader("Trechos")
